@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.sqlite3
+verialign.egg-info/
+*.egg-info/
+.env
+.huggingface/
+dist/
+build/
+.DS_Store
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+tmp/

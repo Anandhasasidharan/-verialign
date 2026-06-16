@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  proxy:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - VERIALIGN_UPSTREAM_BASE_URL=${VERIALIGN_UPSTREAM_BASE_URL}
+      - VERIALIGN_UPSTREAM_API_KEY=${VERIALIGN_UPSTREAM_API_KEY}
+      - VERIALIGN_UPSTREAM_TIMEOUT_SECONDS=60
+      - VERIALIGN_DB_PATH=/data/verialign.sqlite3
+      - VERIALIGN_PROXY_API_KEY=${VERIALIGN_PROXY_API_KEY}
+      - VERIALIGN_REQUIRE_PROXY_AUTH=${VERIALIGN_REQUIRE_PROXY_AUTH:-false}
+      - VERIALIGN_RATE_LIMIT_RPM=60
+      - VERIALIGN_RATE_LIMIT_TPM=100000
+      - VERIALIGN_REDACT_TRACES=true
+    volumes:
+      - verialign_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  dashboard:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - VERIALIGN_DB_PATH=/data/verialign.sqlite3
+    volumes:
+      - verialign_data:/data
+    depends_on:
+      - proxy
+    restart: unless-stopped
+
+volumes:
+  verialign_data:
