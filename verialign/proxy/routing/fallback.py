@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Callable, Awaitable
 
 from verialign.proxy.routing.provider_router import ProviderRouter, ProviderResponse, ProviderError
 

@@ -1,10 +1,10 @@
 from datetime import datetime, timezone, timedelta
 from collections import defaultdict
 from typing import Any
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_
 from sqlalchemy.orm import Session
 
-from verialign.storage.models import Trace, Claim, Contradiction, ChecklistItem
+from verialign.storage.models import Trace, Claim, Contradiction
 
 
 class MetricsStore:

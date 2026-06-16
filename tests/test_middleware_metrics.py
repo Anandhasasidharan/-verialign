@@ -1,11 +1,10 @@
-import pytest
 from starlette.testclient import TestClient
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
 from verialign.proxy.middleware.metrics_middleware import (
-    MetricsMiddleware, metrics_response, PROMETHEUS_AVAILABLE,
+    MetricsMiddleware, metrics_response,
 )
 
 

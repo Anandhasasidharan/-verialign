@@ -1,5 +1,3 @@
-import re
-from typing import Any
 
 from verialign.verification.models import ChecklistItem as ModelChecklistItem
 

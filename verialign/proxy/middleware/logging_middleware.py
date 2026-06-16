@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 import contextvars
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
 
 RESERVED_ATTRS = {
     "args", "asctime", "created", "exc_info", "exc_text", "filename",

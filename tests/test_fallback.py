@@ -1,8 +1,7 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from verialign.proxy.routing.provider_router import ProviderRouter, BaseProvider, ProviderResponse, ProviderError
 from verialign.proxy.routing.fallback import ProviderFallback, with_fallback
-from verialign.proxy.config import Settings
 
 
 class MockProvider(BaseProvider):

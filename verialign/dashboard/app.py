@@ -36,7 +36,7 @@ def load_traces(limit: int = 100):
         try:
             v = json.loads(row["verification_json"])
             return v.get("summary", {})
-        except:
+        except Exception:
             return {}
 
     summaries = df.apply(parse_verification, axis=1, result_type="expand")
@@ -182,7 +182,7 @@ def render_per_task(df):
                 if any(kw in user_content for kw in kws):
                     return task
             return "general"
-        except:
+        except Exception:
             return "unknown"
 
     df["task"] = df.apply(classify_task, axis=1)
@@ -246,7 +246,7 @@ def render_contradictions(df):
                 c["model"] = row["model"]
                 c["created_at"] = row["created_at"]
                 all_contradictions.append(c)
-        except:
+        except Exception:
             pass
 
     if not all_contradictions:

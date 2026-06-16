@@ -1,5 +1,4 @@
 import logging
-import pytest
 from verialign.proxy.config import get_settings
 
 

@@ -1,7 +1,6 @@
 import asyncio
 import time
 import statistics
-import json
 from dataclasses import dataclass
 from typing import List
 

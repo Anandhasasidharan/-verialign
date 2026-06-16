@@ -37,7 +37,7 @@ def render(df: pd.DataFrame):
                     user_content = str(msg.get("content", ""))
                     break
             return classify_task(user_content)
-        except:
+        except Exception:
             return "unknown"
 
     df["task"] = df.apply(extract_task, axis=1)

@@ -163,7 +163,7 @@ class AnthropicProvider(BaseProvider):
             try:
                 from datetime import datetime
                 created_at = int(datetime.fromisoformat(created_at.replace("Z", "+00:00")).timestamp())
-            except:
+            except Exception:
                 created_at = 0
         elif not isinstance(created_at, int):
             created_at = 0

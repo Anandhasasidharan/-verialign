@@ -1,7 +1,6 @@
 import re
 import math
 from collections.abc import Iterable
-from typing import Any
 
 from verialign.verification.models import SourceMatch
 from verialign.verification.web_grounder import WebGrounder
@@ -143,7 +142,6 @@ class SourceGrounder:
 
     def _match_against_context(self, claim: str, context: list[tuple[str, str]], claim_terms: set[str]) -> list[SourceMatch]:
         matches: list[SourceMatch] = []
-        context_ids = [c[0] for c in context]
         context_texts = [c[1] for c in context]
 
         semantic_scores = []

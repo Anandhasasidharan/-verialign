@@ -9,9 +9,7 @@ Usage:
 """
 
 import asyncio
-import sys
 from dataclasses import dataclass, field
-from typing import Any, Callable
 
 from verialign.verification.engine import VerificationEngine
 

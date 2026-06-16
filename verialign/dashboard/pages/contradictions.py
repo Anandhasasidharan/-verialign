@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-from verialign.dashboard.components.charts import render_bar_chart
-from verialign.dashboard.components.filters import render_model_filter
 
 
 def render(df: pd.DataFrame):
@@ -22,7 +20,7 @@ def render(df: pd.DataFrame):
                 c["model"] = row["model"]
                 c["created_at"] = row["created_at"]
                 all_contradictions.append(c)
-        except:
+        except Exception:
             pass
 
     if not all_contradictions:

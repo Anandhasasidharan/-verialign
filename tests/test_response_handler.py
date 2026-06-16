@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import MagicMock
 from verialign.proxy.middleware.response_handler import ResponseHandler
 from verialign.verification.models import VerificationResult, VerifiedClaim, SourceMatch
 

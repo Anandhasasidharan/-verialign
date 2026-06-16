@@ -1,6 +1,5 @@
 import streamlit as st
 from datetime import date, timedelta
-from typing import Optional
 
 
 def render_date_range_filter(key: str = "date_range") -> tuple:

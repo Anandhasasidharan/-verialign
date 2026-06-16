@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Callable
 
 from verialign.verification.claim_extractor import ClaimExtractor
 from verialign.verification.confidence_scorer import ConfidenceScorer

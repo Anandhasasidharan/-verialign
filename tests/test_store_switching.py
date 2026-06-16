@@ -1,4 +1,3 @@
-import pytest
 from verialign.proxy.config import is_async_database, SQLITE_DEFAULT, get_settings
 from verialign.storage.store_factory import create_trace_store
 from verialign.storage.trace_store import TraceStore

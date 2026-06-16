@@ -1,5 +1,4 @@
 import re
-from collections.abc import Iterable
 
 from verialign.verification.models import Contradiction
 

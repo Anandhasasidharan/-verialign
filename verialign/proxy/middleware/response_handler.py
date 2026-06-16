@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Any, Callable
 
 from verialign.verification.engine import VerificationEngine
 from verialign.verification.models import VerificationResult

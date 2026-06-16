@@ -1,6 +1,5 @@
-import pytest
 from verialign.verification.verification_cache import VerificationCache
-from verialign.verification.models import VerificationResult, VerifiedClaim, Contradiction, ChecklistItem, SourceMatch
+from verialign.verification.models import VerificationResult, VerifiedClaim
 
 
 def _make_result(text: str = "test") -> VerificationResult:

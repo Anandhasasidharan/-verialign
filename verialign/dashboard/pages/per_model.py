@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from verialign.dashboard.components.charts import render_status_pie, render_bar_chart
+from verialign.dashboard.components.charts import render_status_pie
 from verialign.dashboard.components.filters import render_model_filter
 
 

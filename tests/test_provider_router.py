@@ -1,6 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from verialign.proxy.routing.provider_router import ProviderRouter, OpenAIProvider, AnthropicProvider, LocalProvider, ProviderError
+from verialign.proxy.routing.provider_router import ProviderRouter, OpenAIProvider, AnthropicProvider, LocalProvider
 from verialign.proxy.config import Settings
 
 

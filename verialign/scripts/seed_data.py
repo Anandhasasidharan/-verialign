@@ -46,7 +46,6 @@ TASK_CATEGORIES = ["question_answering", "coding", "writing", "analysis", "summa
 
 
 def generate_verification_data(prompt: str, response: str, context: list) -> dict:
-    import re
     from verialign.verification.claim_extractor import ClaimExtractor
     from verialign.verification.source_grounder import SourceGrounder
     from verialign.verification.contradiction_detector import ContradictionDetector

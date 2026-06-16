@@ -8,7 +8,6 @@ Usage:
     python3 tests/test_distilgpt2_llm_judge.py
 """
 
-import json
 import sys
 import asyncio
 from pathlib import Path
@@ -21,11 +20,10 @@ import os
 os.environ["VERIALIGN_DB_PATH"] = "/tmp/verialign_test_distilgpt2.sqlite3"
 os.environ["VERIALIGN_DATABASE_URL"] = "sqlite:///tmp/verialign_test_distilgpt2.sqlite3"
 
-from verialign.proxy.config import get_settings
-get_settings.cache_clear()
-
 from transformers import pipeline
+from verialign.proxy.config import get_settings
 from verialign.verification.engine import VerificationEngine
+get_settings.cache_clear()
 
 
 def build_llm_client(pipe):
@@ -116,7 +114,7 @@ async def main():
     print(f"  LLM-sourced claims:          {claims_with_llm}")
     print(f"  Contradictions detected:     {len(result.contradictions) + len(result2.contradictions)}")
     print(f"  Checklist items generated:   {len(result.checklist) + len(result2.checklist)}")
-    print(f"  Pipeline status:             OK — distilgpt2 is fully functional as LLM judge")
+    print("  Pipeline status:             OK — distilgpt2 is fully functional as LLM judge")
     print("=" * 60)
 
     # Cleanup

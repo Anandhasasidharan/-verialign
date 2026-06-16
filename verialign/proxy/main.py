@@ -1,6 +1,5 @@
 import json
 import logging
-import uuid
 from functools import lru_cache
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
@@ -12,8 +11,7 @@ from fastapi.security import APIKeyHeader
 
 from verialign.proxy.config import get_settings
 from verialign.proxy.routing.provider_router import (
-    ProviderRouter, ProviderError, ProviderResponse,
-    close_http_client,
+    ProviderRouter, ProviderError, close_http_client,
 )
 from verialign.proxy.routing.fallback import with_fallback
 from verialign.proxy.middleware.rate_limiter import RateLimiter, RateLimitConfig, get_rate_limiter
@@ -29,6 +27,7 @@ from verialign.proxy.middleware.metrics_middleware import (
 from verialign.proxy.middleware.request_timeout import RequestTimeoutMiddleware
 from verialign.storage.store_factory import create_trace_store
 from verialign.storage.async_trace_store import AsyncTraceStore
+from verialign.storage.trace_store import TraceStore
 from verialign.verification.engine import VerificationEngine
 
 logger = logging.getLogger(__name__)
@@ -206,7 +205,6 @@ async def _handle_streaming(validated, payload: dict, router: ProviderRouter, ra
             try:
                 llm_client = _build_llm_client(router)
                 verifier = VerificationEngine(llm_client=llm_client, web_api_key=settings.web_search_api_key, web_provider=settings.web_search_provider)
-                response_handler = ResponseHandler(verifier)
                 verification = await verifier.verify(full_text, payload.get("metadata", {}).get("context", []))
                 store = _get_store()
                 await _write_trace(store, payload, {"choices": [{"message": {"content": full_text}}]}, verification)
@@ -227,7 +225,6 @@ def _get_router() -> ProviderRouter:
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request, _: None = Depends(verify_proxy_auth)):
     settings = get_settings()
-    rid = get_request_id()
 
     payload = await request.json()
 
