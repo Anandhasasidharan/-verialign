@@ -8,6 +8,7 @@ from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
 from verialign.proxy.config import get_settings
+from verialign.proxy.routing.cost_model import list_model_prices
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -63,3 +64,8 @@ async def admin_traces(limit: int = 100) -> dict:
             return {"traces": await store.list_recent(limit)}
         return {"traces": store.list_recent(limit)}
     return {"traces": []}
+
+
+@router.get("/pricing", dependencies=[Depends(verify_admin)])
+async def admin_pricing() -> dict:
+    return {"models": list_model_prices()}

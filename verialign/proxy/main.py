@@ -1,6 +1,7 @@
 import json
 import logging
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from typing import AsyncIterator
 
 from fastapi import FastAPI, Query, Request, HTTPException, Depends
@@ -9,6 +10,7 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from fastapi.security import APIKeyHeader
 
 from verialign.proxy.config import get_settings
+from verialign.proxy.routing.cost_model import calculate_cost
 from verialign.proxy.routing.provider_router import (
     ProviderRouter,
     ProviderError,
@@ -377,6 +379,18 @@ async def chat_completions(request: Request, _: None = Depends(verify_proxy_auth
     response_handler = ResponseHandler(verifier, structured_output=structured)
     augmented = await response_handler.augment(upstream_response, payload)
 
+    usage = upstream_response.get("usage", {})
+    cost = calculate_cost(
+        validated.model,
+        usage.get("prompt_tokens", 0),
+        usage.get("completion_tokens", 0),
+    )
+    if cost is not None:
+        augmented = replace(augmented)
+        augmented.data["cost"] = cost
+        with_cost = replace(augmented.verification, cost=cost)
+        augmented = replace(augmented, verification=with_cost)
+
     store = _get_store()
     await _write_trace(store, payload, augmented.data, augmented.verification)
 
@@ -391,6 +405,7 @@ async def chat_completions(request: Request, _: None = Depends(verify_proxy_auth
             "provider": provider_name,
             "model": validated.model,
             "claims": augmented.verification.summary["total_claims"],
+            "cost": cost,
         },
     )
 
