@@ -72,10 +72,11 @@ class VerificationResult:
     claims: list[VerifiedClaim]
     contradictions: list[Contradiction]
     checklist: list[ChecklistItem]
+    cost: float | None = None
 
     @property
     def summary(self) -> dict:
-        return {
+        d: dict = {
             "total_claims": len(self.claims),
             "supported": sum(1 for claim in self.claims if claim.status == "supported"),
             "unsupported": sum(
@@ -88,11 +89,17 @@ class VerificationResult:
             "contradictions_found": len(self.contradictions),
             "checklist_items": len(self.checklist),
         }
+        if self.cost is not None:
+            d["cost"] = self.cost
+        return d
 
     def to_dict(self) -> dict:
-        return {
+        d: dict = {
             "claims": [claim.to_dict() for claim in self.claims],
             "contradictions": [c.to_dict() for c in self.contradictions],
             "checklist": [item.to_dict() for item in self.checklist],
             "summary": self.summary,
         }
+        if self.cost is not None:
+            d["cost"] = self.cost
+        return d
