@@ -45,6 +45,10 @@ def list_model_prices() -> dict[str, dict[str, float]]:
     return dict(MODEL_PRICING)
 
 
+def update_model_pricing(model: str, input_price: float, output_price: float) -> None:
+    MODEL_PRICING[model] = {"input": input_price, "output": output_price}
+
+
 def _find_pricing(model: str) -> dict[str, float] | None:
     model_lower = model.lower().strip()
     if model_lower in MODEL_PRICING:

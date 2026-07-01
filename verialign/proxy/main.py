@@ -45,6 +45,7 @@ from verialign.storage.async_trace_store import AsyncTraceStore
 from verialign.storage.trace_store import TraceStore
 from verialign.verification.engine import VerificationEngine
 from verialign.verification.valkey_cache import ValkeyCache
+from verialign.verification.alerting import send_alert
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,8 @@ async def lifespan(app: FastAPI):
         RateLimitConfig(
             requests_per_minute=settings.rate_limit_requests_per_minute,
             tokens_per_minute=settings.rate_limit_tokens_per_minute,
+            key_requests_per_minute=settings.rate_limit_key_rpm,
+            key_tokens_per_minute=settings.rate_limit_key_tpm,
         )
     )
     get_rate_limiter.__globals__["_global_limiter"] = limiter
@@ -114,6 +117,13 @@ async def lifespan(app: FastAPI):
 
     if settings.valkey_url:
         app.state.cache = ValkeyCache()
+        try:
+            from valkey import Valkey
+
+            valkey_client = Valkey.from_url(settings.valkey_url)
+            limiter.set_valkey(valkey_client)
+        except Exception:
+            logger.exception("valkey_rate_limiter_init_failed")
     else:
         app.state.cache = None
 
@@ -354,7 +364,13 @@ async def chat_completions(request: Request, _: None = Depends(verify_proxy_auth
     router = ProviderRouter(settings)
     rate_limiter = get_rate_limiter()
     client_ip = request.client.host if request.client else "unknown"
-    rate_limiter.check_limit(client_ip)
+    auth_header = request.headers.get("authorization", "")
+    api_key = (
+        auth_header.replace("Bearer ", "")
+        if auth_header.startswith("Bearer ")
+        else None
+    )
+    rate_limiter.check_limit(client_ip, api_key=api_key)
 
     if validated.stream:
         return await _handle_streaming(
@@ -378,6 +394,19 @@ async def chat_completions(request: Request, _: None = Depends(verify_proxy_auth
     )
     response_handler = ResponseHandler(verifier, structured_output=structured)
     augmented = await response_handler.augment(upstream_response, payload)
+
+    import asyncio
+
+    asyncio.create_task(
+        send_alert(
+            settings.alert_webhook_url,
+            settings.alert_slack_webhook_url,
+            upstream_response.get("choices", [{}])[0]
+            .get("message", {})
+            .get("content", ""),
+            augmented.verification,
+        )
+    )
 
     usage = upstream_response.get("usage", {})
     cost = calculate_cost(
@@ -410,6 +439,49 @@ async def chat_completions(request: Request, _: None = Depends(verify_proxy_auth
     )
 
     return JSONResponse(content=augmented.data, headers=response_headers)
+
+
+@app.post("/v1/verify")
+async def verify_text(request: Request, _: None = Depends(verify_proxy_auth)):
+    settings = get_settings()
+    payload = await request.json()
+    text = payload.get("text", "")
+    context = payload.get("context", [])
+
+    if not text or not isinstance(text, str):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "message": "text is required",
+                    "type": "validation_error",
+                    "status_code": 400,
+                }
+            },
+        )
+
+    try:
+        llm_client = _build_llm_client(ProviderRouter(settings))
+        verifier = VerificationEngine(
+            llm_client=llm_client,
+            web_api_key=settings.web_search_api_key,
+            web_provider=settings.web_search_provider,
+            cache=getattr(app.state, "cache", None),
+        )
+        result = await verifier.verify(text, context)
+        return JSONResponse(content={"verification": result.to_dict()})
+    except Exception:
+        logger.exception("verify_failed")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": {
+                    "message": "Verification failed",
+                    "type": "internal_error",
+                    "status_code": 500,
+                }
+            },
+        )
 
 
 @app.exception_handler(ProviderError)

@@ -285,15 +285,30 @@ class ProviderRouter:
             AnthropicProvider(settings),
             LocalProvider(settings),
         ]
+        self._circuits: dict = {}
 
     def get_configured_providers(self) -> list[BaseProvider]:
-        return [p for p in self.providers if p.is_configured()]
+        providers = []
+        for p in self.providers:
+            if not p.is_configured():
+                continue
+            cb = self._circuits.get(p.get_provider_name())
+            if cb and not cb.is_available():
+                continue
+            providers.append(p)
+        return providers
 
     def get_provider(self, name: str) -> BaseProvider | None:
         for provider in self.providers:
             if provider.get_provider_name() == name:
                 return provider
         return None
+
+    def register_circuit_breaker(self, name: str, breaker) -> None:
+        self._circuits[name] = breaker
+
+    def get_circuit_statuses(self) -> list[dict]:
+        return [cb.get_status() for cb in self._circuits.values()]
 
     def select_provider(
         self, payload: dict, preferred_provider: str | None = None

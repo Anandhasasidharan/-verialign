@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     rate_limit_tokens_per_minute: int = Field(
         default=100000, alias="VERIALIGN_RATE_LIMIT_TPM"
     )
+    rate_limit_key_rpm: int = Field(default=300, alias="VERIALIGN_RATE_LIMIT_KEY_RPM")
+    rate_limit_key_tpm: int = Field(
+        default=500000, alias="VERIALIGN_RATE_LIMIT_KEY_TPM"
+    )
 
     redact_traces: bool = Field(default=True, alias="VERIALIGN_REDACT_TRACES")
 
@@ -69,6 +73,12 @@ class Settings(BaseSettings):
     )
     safety_pii_redact_enabled: bool = Field(
         default=True, alias="VERIALIGN_SAFETY_PII_REDACT_ENABLED"
+    )
+    alert_webhook_url: str | None = Field(
+        default=None, alias="VERIALIGN_ALERT_WEBHOOK_URL"
+    )
+    alert_slack_webhook_url: str | None = Field(
+        default=None, alias="VERIALIGN_ALERT_SLACK_WEBHOOK_URL"
     )
 
     model_config = SettingsConfigDict(

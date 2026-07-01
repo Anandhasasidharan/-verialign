@@ -8,6 +8,8 @@ from dataclasses import dataclass
 class RateLimitConfig:
     requests_per_minute: int = 60
     tokens_per_minute: int = 100000
+    key_requests_per_minute: int = 300
+    key_tokens_per_minute: int = 500000
 
 
 class TokenBucket:
@@ -38,6 +40,10 @@ class RateLimiter:
             self._create_buckets
         )
         self._lock = threading.Lock()
+        self._valkey = None
+
+    def set_valkey(self, client) -> None:
+        self._valkey = client
 
     def _create_buckets(self) -> tuple[TokenBucket, TokenBucket]:
         return (
@@ -51,7 +57,34 @@ class RateLimiter:
             ),
         )
 
-    def check_limit(self, key: str, estimated_tokens: int = 1000) -> tuple[bool, dict]:
+    def _check_valkey_key(self, api_key: str) -> bool:
+        if not self._valkey:
+            return True
+        try:
+            now = int(time.time())
+            window = 60
+            key_req = f"ratelimit:key:{api_key}:req"
+            self._valkey.zremrangebyscore(key_req, 0, now - window)
+            count = self._valkey.zcard(key_req)
+            if count >= self.default_config.key_requests_per_minute:
+                return False
+            self._valkey.zadd(key_req, {str(now): now})
+            self._valkey.expire(key_req, window * 2)
+            return True
+        except Exception:
+            return True
+
+    def check_limit(
+        self, key: str, estimated_tokens: int = 1000, api_key: str | None = None
+    ) -> tuple[bool, dict]:
+        if api_key and not self._check_valkey_key(api_key):
+            return False, {
+                "requests_remaining": 0,
+                "tokens_remaining": 0,
+                "requests_limit": self.default_config.key_requests_per_minute,
+                "tokens_limit": self.default_config.key_tokens_per_minute,
+            }
+
         req_bucket, token_bucket = self.buckets[key]
 
         req_allowed = req_bucket.consume(1)
@@ -66,8 +99,10 @@ class RateLimiter:
             "tokens_limit": self.default_config.tokens_per_minute,
         }
 
-    def get_headers(self, key: str, estimated_tokens: int = 1000) -> dict:
-        allowed, info = self.check_limit(key, estimated_tokens)
+    def get_headers(
+        self, key: str, estimated_tokens: int = 1000, api_key: str | None = None
+    ) -> dict:
+        allowed, info = self.check_limit(key, estimated_tokens, api_key)
         headers = {
             "X-RateLimit-Limit-Requests": str(info["requests_limit"]),
             "X-RateLimit-Remaining-Requests": str(info["requests_remaining"]),

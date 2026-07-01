@@ -72,6 +72,34 @@ class TestRateLimiter:
         assert "X-RateLimit-Remaining-Tokens" in headers
         assert "X-RateLimit-Allowed" in headers
 
+    def test_check_limit_allows_with_api_key(self):
+        allowed, info = self.limiter.check_limit(
+            "client1", api_key="key-abc", estimated_tokens=100
+        )
+        assert allowed is True
+        assert info["requests_remaining"] == 9
+
+    def test_check_limit_unknown_api_key_falls_back_to_ip(self):
+        allowed, info = self.limiter.check_limit(
+            "client1", api_key=None, estimated_tokens=100
+        )
+        assert allowed is True
+
+    def test_valkey_key_not_available_falls_back(self):
+        self.limiter._valkey = None
+        allowed, info = self.limiter.check_limit(
+            "client1", api_key="key-abc", estimated_tokens=100
+        )
+        assert allowed is True
+
+    def test_key_config_passed_from_init(self):
+        config = RateLimitConfig(
+            key_requests_per_minute=500, key_tokens_per_minute=1_000_000
+        )
+        limiter = RateLimiter(config)
+        assert limiter.default_config.key_requests_per_minute == 500
+        assert limiter.default_config.key_tokens_per_minute == 1_000_000
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

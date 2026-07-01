@@ -8,7 +8,7 @@ from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
 from verialign.proxy.config import get_settings
-from verialign.proxy.routing.cost_model import list_model_prices
+from verialign.proxy.routing.cost_model import list_model_prices, update_model_pricing
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -28,6 +28,35 @@ class ConfigUpdate(BaseModel):
     require_proxy_auth: bool | None = None
 
 
+class PricingUpdate(BaseModel):
+    model: str
+    input_price: float
+    output_price: float
+
+
+_runtime_config: dict = {}
+
+
+@router.put("/config", dependencies=[Depends(verify_admin)])
+async def update_config(update: ConfigUpdate) -> dict:
+    _runtime_config.update(update.model_dump(exclude_none=True))
+    logger.info(
+        "admin_config_updated", extra={"changes": update.model_dump(exclude_none=True)}
+    )
+    return {"status": "ok", "overrides": dict(_runtime_config)}
+
+
+@router.put("/pricing", dependencies=[Depends(verify_admin)])
+async def update_pricing(update: PricingUpdate) -> dict:
+    update_model_pricing(update.model, update.input_price, update.output_price)
+    logger.info("admin_pricing_updated", extra={"model": update.model})
+    return {
+        "status": "ok",
+        "model": update.model,
+        "pricing": {"input": update.input_price, "output": update.output_price},
+    }
+
+
 @router.get("/config", dependencies=[Depends(verify_admin)])
 async def get_config() -> dict:
     settings = get_settings()
@@ -35,6 +64,8 @@ async def get_config() -> dict:
     for key in ("upstream_api_key", "proxy_api_key", "admin_api_key"):
         if s.get(key):
             s[key] = "***"
+    if _runtime_config:
+        s["runtime_overrides"] = dict(_runtime_config)
     return s
 
 
@@ -69,3 +100,12 @@ async def admin_traces(limit: int = 100) -> dict:
 @router.get("/pricing", dependencies=[Depends(verify_admin)])
 async def admin_pricing() -> dict:
     return {"models": list_model_prices()}
+
+
+@router.get("/circuits", dependencies=[Depends(verify_admin)])
+async def admin_circuits() -> dict:
+    from verialign.proxy.routing.provider_router import ProviderRouter
+
+    settings = get_settings()
+    router_inst = ProviderRouter(settings)
+    return {"circuits": router_inst.get_circuit_statuses()}
